@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#251b35">
+<meta name="description" content="Relic Helper — inventory and crafting planner">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="./assets/icons/icon-192.png">
+<link rel="apple-touch-icon" href="./assets/icons/icon-192.png">
+<title>Relic Helper</title>
+<style>
+:root{--bg:#15111d;--panel:#211a2c;--panel2:#2c2338;--line:#473653;--ink:#f8f1ff;--muted:#c0b2cf;--accent:#d6a5ff;--accent2:#8e62c2;--good:#8ee0b2;--warn:#ffcf8a}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#30213f 0,var(--bg) 58%);color:var(--ink);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{padding:22px 16px 12px;max-width:1100px;margin:auto}h1{margin:0;font-size:clamp(1.8rem,5vw,2.5rem);letter-spacing:.02em}main{max-width:1100px;margin:auto;padding:0 14px 40px;display:grid;gap:16px}
+section{background:rgba(33,26,44,.96);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 10px 28px #0002}
+h2{font-size:1.2rem;color:var(--accent);margin:0 0 14px;border-bottom:1px solid var(--line);padding-bottom:9px}
+p.note{color:var(--muted);margin:0 0 12px;font-size:.92rem}
+.material-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:10px}
+.material{display:flex;align-items:center;gap:13px;padding:10px;background:var(--panel2);border:1px solid #453450;border-radius:14px;min-width:0}
+.material img{width:105px;height:105px;object-fit:contain;flex:0 0 105px;border-radius:9px}
+.material-meta{flex:1;min-width:0}.code{font-size:1rem;font-weight:800;color:#e8caff;letter-spacing:.04em}.name{font-size:1.03rem;font-weight:650;overflow-wrap:anywhere}
+.qty{display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--muted);font-size:.86rem}.qty input{width:86px;padding:8px;border:1px solid #655171;border-radius:8px;background:#17111f;color:white;font:inherit}
+.mode-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.mode-card{cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:8px;text-align:center;background:var(--panel2);border:2px solid var(--line);border-radius:14px;padding:12px;box-shadow:0 0 0 2px #d6a5ff22}.mode-card input{accent-color:var(--accent);width:18px;height:18px;align-self:flex-start}.mode-card img{width:100%;max-width:328px;height:auto;max-height:150px;object-fit:contain;display:block;margin:0 auto}.mode-title{font-weight:750;text-align:center}
+button{background:var(--accent);color:#21152c;border:0;border-radius:12px;padding:12px 18px;font-weight:800;font-size:1rem;cursor:pointer}button:active{transform:translateY(1px)}.secondary{background:#41314e;color:var(--ink);border:1px solid #6a5579}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}.center-actions{justify-content:center}
+.output-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.output-card{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px}.output-count{font-size:2rem;font-weight:850;color:var(--good)}
+.list{display:grid;gap:8px}.list-row{display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--panel2);border-radius:9px}.list-row img{width:52px;height:52px;object-fit:contain;flex:0 0 52px}.list-item-meta{flex:1;min-width:0}.list-item-meta .code{font-size:.84rem}.list-item-meta .name{font-size:.9rem}.list-row .list-value{font-weight:750;text-align:right;margin-left:auto}.empty{color:var(--muted);padding:12px 0}
+.recipe-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:10px}.recipe{padding:12px;border-radius:12px;background:var(--panel2);border:1px solid var(--line)}.recipe strong{display:block;margin-bottom:6px}.recipe small{color:var(--muted)}
+footer{max-width:1100px;margin:auto;padding:0 16px 28px;color:var(--muted);font-size:.86rem}
+@media(max-width:540px){header{padding-top:17px}.material-grid{grid-template-columns:1fr}.material img{width:100px;height:100px;flex-basis:100px}.mode-grid,.output-grid{grid-template-columns:1fr}.mode-card img{width:100%;max-width:328px;height:auto;max-height:150px}section{padding:13px}}
+</style>
+</head>
+<body>
+<header><h1>Relic Helper</h1></header>
+<main>
+<section id="inventory">
+<h2>Inventory</h2>
+<p class="note">Enter how many of each material you currently own.</p>
+<div id="inventoryGrid" class="material-grid"></div>
+<div class="actions center-actions"><button class="secondary" id="clearInventory">Clear Quantities</button></div>
+</section>
+<section id="mode">
+<h2>Calculation Mode</h2>
+
+<div class="mode-grid">
+<label class="mode-card selected" id="modeOne"><input type="radio" name="mode" value="one" checked><img src="assets/Mythic Relic I.jpg" alt="Mythic Relic I"><span class="mode-title">Mythic Relic I</span></label>
+<label class="mode-card" id="modeTwo"><input type="radio" name="mode" value="two"><img src="assets/Mythic Relic II.jpg" alt="Mythic Relic II"><span class="mode-title">Mythic Relic II</span></label>
+</div>
+</section>
+<section id="outputs">
+<h2>Final Outputs</h2>
+<div class="output-grid">
+<div class="output-card"><div class="name">Mythic Relic I</div><div class="output-count" id="countOne">0</div><small>possible with current inventory</small></div>
+<div class="output-card"><div class="name">Mythic Relic II</div><div class="output-count" id="countTwo">0</div><small>possible with current inventory</small></div>
+</div>
+<div class="actions center-actions"><button id="combine">Combine</button></div>
+<p class="note" id="outputNote" aria-live="polite">Choose a mode and press Combine to calculate a crafting plan.</p>
+</section>
+<section id="actions">
+<h2>Combining Actions</h2>
+<div id="actionList" class="list"><div class="empty">Your crafting plan will appear here after you press Combine.</div></div>
+</section>
+<section id="remaining">
+<h2>Remaining Inventory</h2>
+<div id="remainingList" class="list"><div class="empty">Calculate a plan to see what remains.</div></div>
+</section>
+<section id="install">
+<h2>To install on Android</h2>
+<p class="note">Open the published Relic Helper website in Chrome, open the browser menu, then choose “Install app” or “Add to Home screen” if available.</p>
+</section>
+</main>
+
+<script>
+const materials=[
+["T1B1","Bronze Mirror","Bronze Mirror.jpg"],["T1B2","Beast Bone","Beast Bone.jpg"],["T1B3","Limestone","Limestone.jpg"],
+["T2B1","Bronze Dagger","Bronze Dagger.jpg"],["T2B2","Bone Saw","Bone Saw.jpg"],["T2B3","Stone Hammer","Stone Hammer.jpg"],
+["T3V1","Puppet Doll","Puppet Doll.jpg"],["T3V2","Beast Totem","Beast Totem.jpg"],["T3V3","Assembly Flag","Assembly Flag.jpg"],
+["T3V4","Tribal Goblet","Tribal Goblet.jpg"],["T3V5","Bone Scepter","Bone Scepter.jpg"],["T3V6","Mithril Axe","Mithril Axe.jpg"],
+["T4AY1","Broadsword","Broadsword.jpg"],["T4AY2","Buckler","Buckler.jpg"],["T4AY3","Dragon Seal","Dragon Seal.jpg"],["T4AY4","Memorial Stele","Memorial Stele.jpg"],
+["T4BY1","Ruby Cup","Ruby Cup.jpg"],["T4BY2","Heart of Cleansing","Heart of Cleansing.jpg"],["T4BY3","Tideblade","Tideblade.jpg"],["T4BY4","Arcane Key","Arcane Key.jpg"]
+];
+const recipes=[
+{out:"T2B1",in:{T1B2:2,T1B1:4}}, {out:"T2B2",in:{T1B3:2,T1B2:4}}, {out:"T2B3",in:{T1B1:2,T1B3:4}},
+{out:"T3V1",in:{T2B2:1,T2B1:2}}, {out:"T3V2",in:{T2B1:1,T2B2:2}}, {out:"T3V3",in:{T2B3:1,T2B2:2}},
+{out:"T3V4",in:{T2B2:1,T2B3:2}}, {out:"T3V5",in:{T2B3:1,T2B1:2}}, {out:"T3V6",in:{T2B1:1,T2B3:2}},
+{out:"T4AY1",in:{T3V1:1,T3V2:1,T3V4:1}}, {out:"T4AY2",in:{T3V1:1,T3V3:1,T3V6:1}},
+{out:"T4AY3",in:{T3V1:1,T3V4:1,T3V6:1}}, {out:"T4AY4",in:{T3V2:1,T3V3:1,T3V4:1}},
+{out:"T4BY1",in:{T3V2:1,T3V5:1,T3V6:1}}, {out:"T4BY2",in:{T3V3:1,T3V4:1,T3V5:1}},
+{out:"T4BY3",in:{T3V3:1,T3V5:1,T3V6:1}}, {out:"T4BY4",in:{T3V1:1,T3V2:1,T3V5:1}}
+];
+const finalRecipes={
+one:[["T4AY1","T4AY2","T4AY3"],["T4AY1","T4AY2","T4AY4"],["T4AY2","T4AY3","T4AY4"],["T4AY1","T4AY3","T4AY4"]],
+two:[["T4BY1","T4BY2","T4BY3"],["T4BY1","T4BY2","T4BY4"],["T4BY2","T4BY3","T4BY4"],["T4BY1","T4BY3","T4BY4"]]
+};
+const byCode=Object.fromEntries(materials.map(m=>[m[0],m]));
+const qty={}; materials.forEach(m=>qty[m[0]]=0);
+const grid=document.getElementById("inventoryGrid");
+materials.forEach(([code,name,file])=>{
+ const card=document.createElement("div");card.className="material";
+ card.innerHTML=`<img src="${"assets/"+file}" alt="${name}"><div class="material-meta"><div class="code">${code}</div><div class="name">${name}</div><label class="qty">Owned <input type="number" min="0" step="1" value="" inputmode="numeric" data-code="${code}" aria-label="Quantity of ${name}"></label></div>`;
+ grid.append(card);
+});
+function recipeLabel(r){return `${Object.entries(r.in).map(([c,n])=>`${n} × ${byCode[c][1]}`).join(" + ")} → 1 × ${byCode[r.out][1]}`;}
+document.querySelectorAll('input[data-code]').forEach(inp=>inp.addEventListener("input",()=>{qty[inp.dataset.code]=Math.max(0,Math.floor(Number(inp.value)||0));}));
+let selected="one"; let lastPlan=null;
+document.querySelectorAll('input[name="mode"]').forEach(r=>r.addEventListener("change",()=>{selected=r.value;document.getElementById("modeOne").classList.toggle("selected",selected==="one");document.getElementById("modeTwo").classList.toggle("selected",selected==="two");}));
+document.getElementById("clearInventory").onclick=()=>{document.querySelectorAll('input[data-code]').forEach(i=>{i.value="";qty[i.dataset.code]=0;});lastPlan=null;document.getElementById("actionList").innerHTML='<div class="empty">Your crafting plan will appear here after you press Combine.</div>';document.getElementById("remainingList").innerHTML='<div class="empty">Calculate a plan to see what remains.</div>';};
+function copyObj(o){return {...o};}
+function plan(stock,fc,fs){
+ const demand=Object.fromEntries(materials.map(m=>[m[0],0]));
+ const acts=Object.fromEntries(recipes.map(r=>[r.out,0]));
+ let f1=0,f2=0;
+ fc.forEach((n,i)=>{
+   if(!n)return;
+   if(fs[i].group===1)f1+=n;else f2+=n;
+   fs[i].ins.forEach(id=>demand[id]+=n);
+ });
+ for(let tier=4;tier>=2;tier--){
+   for(const [id] of materials.filter(m=>Number(m[0].match(/^T(\d)/)?.[1])===tier).map(m=>[m[0]])){
+     const deficit=Math.max(0,demand[id]-(stock[id]||0));
+     if(deficit){
+       acts[id]=deficit;
+       const recipe=recipes.find(r=>r.out===id);
+       Object.entries(recipe.in).forEach(([ingredient,n])=>demand[ingredient]+=deficit*n);
+     }
+   }
+ }
+ for(const [id] of materials.filter(m=>Number(m[0].match(/^T(\d)/)?.[1])===1)){
+   if(demand[id]>(stock[id]||0))return null;
+ }
+ const left={...stock};
+ recipes.forEach(r=>{
+   const n=acts[r.out]||0;
+   Object.entries(r.in).forEach(([id,q])=>left[id]-=n*q);
+   left[r.out]+=n;
+ });
+ fc.forEach((n,i)=>fs[i].ins.forEach(id=>left[id]-=n));
+ if(materials.some(m=>left[m[0]]<0))return null;
+ return {acts,left,f1,f2,total:f1+f2,fc:[...fc]};
+}
+function score(p){
+ const vals=materials.map(m=>p.left[m[0]]||0),mean=vals.reduce((a,b)=>a+b,0)/vals.length;
+ return vals.reduce((s,v)=>s+(v-mean)**2,0)*1000+Object.values(p.acts).reduce((a,b)=>a+b,0);
+}
+function optimize(stock){
+ const fs=(selected==='two'?finalRecipes.two:finalRecipes.one).map(ins=>({group:selected==='two'?2:1,ins}));
+ const N=Object.values(stock).reduce((a,b)=>a+b,0),max=Math.floor(N/3),counts=fs.map(()=>0);
+ let best=null,nodes=0;const cap=250000;
+ function dfs(i,total){
+   if(++nodes>cap)return;
+   if(best&&total+(fs.length-i)*max<best.total)return;
+   if(i===fs.length){const p=plan(stock,counts,fs);if(p&&(!best||p.total>best.total||(p.total===best.total&&score(p)<score(best))))best=p;return;}
+   const upper=Math.min(max,max-total);
+   for(let n=upper;n>=0;n--){counts[i]=n;const p=plan(stock,counts,fs);if(p)dfs(i+1,total+n);if(nodes>cap)break;}
+   counts[i]=0;
+ }
+ dfs(0,0);
+ if(!best)best=plan(stock,fs.map(()=>0),fs);
+ best.capped=nodes>cap;best.nodes=nodes;best.fs=fs;
+ return best;
+}
+function calculate(){
+ const starting=copyObj(qty);
+ const mode=selected;
+ const result=optimize(starting);
+ lastPlan=result;
+ document.getElementById("countOne").textContent=mode==="one"?result.f1:"—";
+ document.getElementById("countTwo").textContent=mode==="two"?result.f2:"—";
+ const grouped=result.acts||{};
+ const rows=[];
+ materials.forEach(([code,name,file])=>{
+   const n=grouped[code]||0;
+   if(!n)return;
+   rows.push(`<div class="list-row"><img src="assets/${file}" alt="${name}"><div class="list-item-meta"><div class="code">${code}</div><div class="name">${name}</div></div><span class="list-value">${n} action${n===1?"":"s"}</span></div>`);
+ });
+ document.getElementById("actionList").innerHTML=rows.length?rows.join(""):'<div class="empty">No crafting actions are needed for the selected plan.</div>';
+ document.getElementById("remainingList").innerHTML=materials.filter(m=>(result.left[m[0]]||0)>0).map(([c,n,file])=>`<div class="list-row"><img src="assets/${file}" alt="${n}"><div class="list-item-meta"><div class="code">${c}</div><div class="name">${n}</div></div><span class="list-value">${result.left[c]}</span></div>`).join("")||'<div class="empty">No materials remain in the selected plan.</div>';
+ document.getElementById("outputNote").textContent=`Calculated for ${mode==="one"?"Mythic Relic I":"Mythic Relic II"}. This is a planning result from the quantities entered.${result.capped?" Search limit reached; result may not be optimal.":""}`;
+}
+document.getElementById("combine").onclick=calculate;
+if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+</script>
+</body>
+</html>
